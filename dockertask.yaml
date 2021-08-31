@@ -1,0 +1,69 @@
+- hosts: localhost
+  vars_prompt:
+      - name: container_name
+        prompt: "Docker Container Name: "
+        private: no
+
+  vars:
+          - image_name: surajwarbhe/ssh_centos:v1
+
+  tasks:
+      - name: Creating Repo for yum
+        yum_repository:
+            name: docker
+            file: docker
+            description: Docker Yum Repo
+            baseurl: https://download.docker.com/linux/centos/7/x86_64/stable/
+            gpgcheck: no
+
+      - name: Installing Python3...
+        command: "yum -y install python3"
+      - name: Installing Docker Software...
+        command: "yum install -y  docker-ce --nobest"
+
+      - name: Starting Docker services...
+        service:
+            name: "docker"
+            state: started
+            enabled: yes
+
+      - name: Installing Docker Library...
+        command: "pip3 install docker-py"
+
+      - name: pull an image
+        docker_image:
+            name: "{{ image_name }}"
+            source: pull
+
+      - name: "Launching {{ container_name }} Container"
+        docker_container:
+            name: "{{ container_name }}"
+            image: "{{ image_name }}"
+            state: started
+            interactive: yes
+            detach: yes
+            tty: yes
+
+      - name: "Container Info"
+        docker_container_info:
+            name: "{{ container_name }}"
+        register: dinfo
+
+      - name: "Printing IP of Docker container..."
+        debug:
+              msg: "{{ dinfo.container.NetworkSettings.IPAddress}}"
+
+      - name: updating ansible inventory  with new docker info.......
+        blockinfile:
+            path: "/root/ip.txt"
+            block: |
+                    [docker]
+                    {{ dinfo['container']['NetworkSettings']['IPAddress'] }} ansible_user=root ansible_ssh_pass=centos  ansible_connection=ssh
+
+  handlers:
+  - name: docker
+    yum:
+        name: docker-ce
+        state: present
+        allow_downgrade: yes
+        skip_broken: yes
