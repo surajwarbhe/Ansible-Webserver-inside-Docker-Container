@@ -1,6 +1,6 @@
 # Create an Ansible Playbook that will configure Docker and dynamically update the inventory with newly created Docker Container IP
 
-# STEPS:
+# STEPS: (For RHEL 8)
 1. **Enable SSH in the Container using Dockerfile**
 2. **Build and Push this image to the Docker Hub**
 3. **Ansible Play that will launch and configure the Docker Container and webserver inside it**
